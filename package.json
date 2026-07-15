@@ -1,0 +1,37 @@
+{
+  "name": "fix-cc",
+  "version": "1.0.0",
+  "description": "A lightweight proxy server that fix the system message format in CC requests.",
+  "homepage": "https://github.com/TikaFlow/fix-cc#readme",
+  "bugs": {
+    "url": "https://github.com/TikaFlow/fix-cc/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TikaFlow/fix-cc.git"
+  },
+  "keywords": [
+    "claude",
+    "anthropic",
+    "proxy",
+    "system-message",
+    "fix",
+    "claude-code"
+  ],
+  "license": "MIT",
+  "author": "TikaFlow",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=14"
+  },
+  "bin": {
+    "fix-cc": "bin/fix-claude.js"
+  },
+  "files": [
+    "bin/"
+  ],
+  "dependencies": {
+    "commander": "^15.0.0",
+    "express": "^5.2.1"
+  }
+}
