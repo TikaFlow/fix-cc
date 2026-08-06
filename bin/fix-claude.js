@@ -10,6 +10,8 @@ const { program } = require('commander');
 program
     .option('-u, --target-url <url>', '目标 API 基础 URL')
     .option('-p, --port <port>', '代理服务器监听端口', parseInt)
+    .option('-b, --body-rewrite <key=value>', '覆盖请求 body 中的字段，支持点号路径，如 thinking.type=enabled（可多次使用）', (val, acc) => acc.concat([val]), [])
+    .option('--thinking <value>', '等价于 --body-rewrite thinking.type=<value>，常见值: enabled/disabled/auto')
     .parse(process.argv);
 
 const options = program.opts();
@@ -54,6 +56,21 @@ function forwardRequest(req, res, payloadString) {
     }
 }
 
+// ---------- 工具函数 ----------
+
+// 按点号路径设置对象属性值（如 "thinking.type"）
+function setByPath(obj, path, value) {
+    const keys = path.split('.');
+    let current = obj;
+    for (let i = 0; i < keys.length - 1; i++) {
+        if (!current[keys[i]] || typeof current[keys[i]] !== 'object') {
+            current[keys[i]] = {};
+        }
+        current = current[keys[i]];
+    }
+    current[keys[keys.length - 1]] = value;
+}
+
 // 只对 POST /v1/messages 进行 body 覆盖
 app.post('/v1/messages', express.json({ limit: '10mb' }), (req, res) => {
     const body = req.body || {};
@@ -91,6 +108,22 @@ app.post('/v1/messages', express.json({ limit: '10mb' }), (req, res) => {
         messages: newMessages,
         system: topSystem,
     };
+
+    // 应用 body-rewrite 规则
+    const rewrites = [...(options.bodyRewrite || [])];
+
+    // --thinking 作为语法糖，等价于 --body-rewrite thinking.type=<value>
+    if (options.thinking) {
+        rewrites.push('thinking.type=' + options.thinking);
+    }
+
+    // 解析 "key=value" 并执行覆盖
+    for (const entry of rewrites) {
+        const eqIdx = entry.indexOf('=');
+        if (eqIdx !== -1) {
+            setByPath(newBody, entry.slice(0, eqIdx), entry.slice(eqIdx + 1));
+        }
+    }
 
     const payload = JSON.stringify(newBody);
     forwardRequest(req, res, payload);
