@@ -12,6 +12,7 @@ program
     .option('-p, --port <port>', '代理服务器监听端口', parseInt)
     .option('-b, --body-rewrite <key=value>', '覆盖请求 body 中的字段，支持点号路径，如 thinking.type=enabled（可多次使用）', (val, acc) => acc.concat([val]), [])
     .option('--thinking <value>', '等价于 --body-rewrite thinking.type=<value>，常见值: enabled/disabled/auto')
+    .option('--header-rewrite <key=value>', '覆盖转发请求的 HTTP 头字段，如 X-Custom-Header=value（可多次使用）', (val, acc) => acc.concat([val]), [])
     .parse(process.argv);
 
 const options = program.opts();
@@ -21,9 +22,9 @@ const PORT = options.port || 3210;
 const app = express();
 
 // 通用转发函数
-function forwardRequest(req, res, payloadString) {
+function forwardRequest(req, res, payloadString, extraHeaders) {
     const target = new URL(req.originalUrl, TARGET_URL);
-    const headers = { ...req.headers };
+    const headers = { ...req.headers, ...extraHeaders };
     delete headers['content-length'];
     delete headers['host'];
     delete headers['connection'];
@@ -125,8 +126,17 @@ app.post('/v1/messages', express.json({ limit: '10mb' }), (req, res) => {
         }
     }
 
+    // 解析 header-rewrite 规则
+    const extraHeaders = {};
+    for (const entry of (options.headerRewrite || [])) {
+        const eqIdx = entry.indexOf('=');
+        if (eqIdx !== -1) {
+            extraHeaders[entry.slice(0, eqIdx)] = entry.slice(eqIdx + 1);
+        }
+    }
+
     const payload = JSON.stringify(newBody);
-    forwardRequest(req, res, payload);
+    forwardRequest(req, res, payload, extraHeaders);
 });
 
 // 其他请求完全透传

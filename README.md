@@ -40,6 +40,9 @@ fix-cc -u https://your-api-endpoint.com --body-rewrite thinking.type=enabled
 
 # 使用 --thinking 语法糖（等价于 --body-rewrite thinking.type=<value>）
 fix-cc -u https://your-api-endpoint.com --thinking enabled
+
+# 覆盖转发请求的 HTTP 头字段
+fix-cc -u https://your-api-endpoint.com --header-rewrite anthropic-version=2023-06-01
 ```
 
 然后配置 Claude Code 将 API 请求指向该代理。
@@ -52,6 +55,7 @@ fix-cc -u https://your-api-endpoint.com --thinking enabled
 | `--port` | `-p` | 代理服务器监听端口 | `3210` |
 | `--body-rewrite <key=value>` | `-b` | 覆盖请求 body 中的字段，支持点号路径（如 `thinking.type=enabled`），可多次指定 | 空 |
 | `--thinking <value>` | - | 语法糖，等价于 `--body-rewrite thinking.type=<value>`；常见值 `enabled` / `disabled` / `auto` | 空 |
+| `--header-rewrite <key=value>` | - | 覆盖转发请求的 HTTP 头字段（如 `anthropic-version=2023-06-01`），可多次指定 | 空 |
 
 ## 工作原理
 
@@ -59,9 +63,8 @@ fix-cc -u https://your-api-endpoint.com --thinking enabled
 2. 将 `messages` 数组中所有 `role: "system"` 条目的内容提取到顶层 `system` 字段
 3. 非 system 的消息保持原顺序
 4. 按 `--body-rewrite` 规则覆盖 body 中指定路径的字段（始终写入，即使原 body 中不存在该路径）
-5. 其他请求完全透传，不做任何修改
-
-`--body-rewrite` 通过点号路径定位要覆盖的字段，例如 `--body-rewrite thinking.type=enabled` 会将 `body.thinking.type` 覆盖为 `enabled`；`--thinking enabled` 与之等价。
+5. 按 `--header-rewrite` 规则覆盖请求的 HTTP 头字段
+6. 其他请求完全透传，不做任何修改
 
 ## 许可证
 
