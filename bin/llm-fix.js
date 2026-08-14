@@ -228,8 +228,19 @@ zen.use('/v1', (req, res) =>
 zen.use((req, res) => forward(req, res, ZEN_TARGET, {}));
 app.use('/zen', zen);
 
+// 自定义终端窗口标题：Windows 用 process.title（底层 SetConsoleTitle，修改 cmd 窗口标题），
+// 其余平台在 TTY 下输出 OSC 转义序列（主流终端仿真器均支持）
+function setWindowTitle(title) {
+    if (process.platform === 'win32') {
+        process.title = title;
+    } else if (process.stdout.isTTY) {
+        process.stdout.write('\x1b]0;' + title + '\x07');
+    }
+}
+
 app.listen(PORT, HOST, () => {
     console.log(`llm-fix proxy on http://${HOST}:${PORT}`);
     console.log(`  /nova -> ${NOVA_TARGET}`);
     console.log(`  /zen  -> ${ZEN_TARGET}`);
+    setWindowTitle('llm-fix');
 });
