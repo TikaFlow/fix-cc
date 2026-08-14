@@ -22,7 +22,7 @@
   "author": "TikaFlow",
   "type": "commonjs",
   "engines": {
-    "node": ">=14"
+    "node": ">=20"
   },
   "bin": {
     "llm-fix": "bin/llm-fix.js"

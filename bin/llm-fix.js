@@ -25,6 +25,8 @@ const ZEN_TARGET = 'https://opencode.ai/zen';
 const ZEN_UA = 'opencode/1.18.18 (windows amd64; go1.24.0)';
 const UPSTREAM_TIMEOUT = 120_000;   // 等待上游"响应开始"的上限；响应开始后流式响应不限时长
 const MAX_BODY = 20 * 1024 * 1024;  // 缓冲请求体的上限，超出返回 413
+// HTTP/1.1 逐跳头（RFC 7230 §6.1）：代理转发时必须删除，避免双重 chunked、干扰连接复用等
+const HOP_BY_HOP_HEADERS = ['connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'te', 'trailer', 'transfer-encoding', 'upgrade'];
 
 // 预解析覆盖规则（仅处理点生效）
 const headerRewrite = {};
@@ -129,7 +131,7 @@ function forward(req, res, targetBase, opts) {
         const target = new URL(targetBase.replace(/\/+$/, '') + transitPath);
         const headers = { ...req.headers, ...extraHeaders };
         delete headers['host'];       // 改写为上游 Host
-        delete headers['connection']; // 去除逐跳头
+        for (const h of HOP_BY_HOP_HEADERS) delete headers[h]; // 去除全部逐跳头
         if (payload !== null) {
             delete headers['content-length']; // 改写负载需重算
             if (payload.length) {
