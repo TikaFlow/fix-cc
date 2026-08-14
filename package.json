@@ -1,7 +1,7 @@
 {
   "name": "llm-fix",
   "version": "1.0.0",
-  "description": "A lightweight proxy server that fix the system message format in CC requests.",
+  "description": "A lightweight proxy server for Claude Code API requests.",
   "homepage": "https://github.com/TikaFlow/llm-fix#readme",
   "bugs": {
     "url": "https://github.com/TikaFlow/llm-fix/issues"
