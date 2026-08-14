@@ -105,7 +105,8 @@ function foldSystem(body) {
 }
 
 // ---------- 转发核心 ----------
-// opts: { transform?, rewriteBody?, applyThinking?, extraHeaders? }
+// opts: { prefix?, transform?, rewriteBody?, applyThinking?, extraHeaders? }
+//   prefix        本地挂载前缀（如 /nova、/zen），用于从 originalUrl 还原透传路径
 //   transform      对解析后的 JSON body 做结构化改写（/nova/v1/messages 的 system 折叠）
 //   rewriteBody    是否应用 --body-rewrite（仅处理点）
 //   applyThinking  是否写入 --thinking（仅 /nova/v1/messages）
@@ -118,9 +119,14 @@ function forward(req, res, targetBase, opts) {
     const extraHeaders = opts.extraHeaders || null;
     const needBuf = transform || (rewriteBody && bodyRewrites.length > 0) || (applyThinking && thinkingValue);
 
+    // 透传路径：不能用 req.url——路由层的 use('/v1') 会再次剥离路径前缀；
+    // 从 originalUrl（完整原始 URL）减掉本地挂载前缀得到，与 targetBase 无缝衔接
+    const prefix = opts.prefix || '';
+    const transitPath = prefix ? req.originalUrl.slice(prefix.length) : req.url;
+
     // 实际发送：payload 为 null 表示流式透传（保留原 content-length）
     const send = (payload, asJson) => {
-        const target = new URL(targetBase.replace(/\/+$/, '') + req.url);
+        const target = new URL(targetBase.replace(/\/+$/, '') + transitPath);
         const headers = { ...req.headers, ...extraHeaders };
         delete headers['host'];       // 改写为上游 Host
         delete headers['connection']; // 去除逐跳头
@@ -195,9 +201,9 @@ function forward(req, res, targetBase, opts) {
 // ---------- /nova：llm-fix 逻辑 ----------
 const nova = express.Router();
 nova.post('/v1/messages', (req, res) =>
-    forward(req, res, NOVA_TARGET, { transform: foldSystem, rewriteBody: true, applyThinking: true, extraHeaders: headerRewrite }));
+    forward(req, res, NOVA_TARGET, { prefix: '/nova', transform: foldSystem, rewriteBody: true, applyThinking: true, extraHeaders: headerRewrite }));
 // 其余 /nova/* 字节级透传
-nova.use((req, res) => forward(req, res, NOVA_TARGET, {}));
+nova.use((req, res) => forward(req, res, NOVA_TARGET, { prefix: '/nova' }));
 app.use('/nova', nova);
 
 // ---------- /zen：opencode 伪装 ----------
@@ -223,9 +229,9 @@ function buildZenHeaders(req) {
 const zen = express.Router();
 // /zen/v1 任意路径：注入伪装头，--header-rewrite 覆盖优先
 zen.use('/v1', (req, res) =>
-    forward(req, res, ZEN_TARGET, { rewriteBody: true, extraHeaders: { ...buildZenHeaders(req), ...headerRewrite } }));
+    forward(req, res, ZEN_TARGET, { prefix: '/zen', rewriteBody: true, extraHeaders: { ...buildZenHeaders(req), ...headerRewrite } }));
 // 其余 /zen/* 字节级透传
-zen.use((req, res) => forward(req, res, ZEN_TARGET, {}));
+zen.use((req, res) => forward(req, res, ZEN_TARGET, { prefix: '/zen' }));
 app.use('/zen', zen);
 
 // 自定义终端窗口标题：Windows 用 process.title（底层 SetConsoleTitle，修改 cmd 窗口标题），
