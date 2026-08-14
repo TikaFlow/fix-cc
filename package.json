@@ -1,14 +1,14 @@
 {
-  "name": "fix-cc",
+  "name": "llm-fix",
   "version": "1.0.0",
   "description": "A lightweight proxy server that fix the system message format in CC requests.",
-  "homepage": "https://github.com/TikaFlow/fix-cc#readme",
+  "homepage": "https://github.com/TikaFlow/llm-fix#readme",
   "bugs": {
-    "url": "https://github.com/TikaFlow/fix-cc/issues"
+    "url": "https://github.com/TikaFlow/llm-fix/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TikaFlow/fix-cc.git"
+    "url": "git+https://github.com/TikaFlow/llm-fix.git"
   },
   "keywords": [
     "claude",
@@ -25,7 +25,7 @@
     "node": ">=14"
   },
   "bin": {
-    "fix-cc": "bin/fix-claude.js"
+    "llm-fix": "bin/llm-fix.js"
   },
   "files": [
     "bin/"

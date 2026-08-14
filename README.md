@@ -1,4 +1,4 @@
-# fix-cc
+# llm-fix
 
 修复 Claude Code 请求中 system message 格式的轻量级代理服务器。
 
@@ -10,39 +10,39 @@ Claude Code 发送 API 请求时，system message 有时会以 `messages` 数组
 API Error: 400 Failed to build prompt: System message must be at the beginning.
 ```
 
-`fix-cc` 作为中间代理，自动将 `messages` 中的 system 内容提取并合并到顶层 `system` 字段。
+`llm-fix` 作为中间代理，自动将 `messages` 中的 system 内容提取并合并到顶层 `system` 字段。
 
 ## 安装
 
 ### 全局安装
 
 ```bash
-npm i -g github:TikaFlow/fix-cc
+npm i -g github:TikaFlow/llm-fix
 ```
 
 ### 临时运行（无需安装）
 
 ```bash
-npx github:TikaFlow/fix-cc -u https://your-api-endpoint.com -p 8080
+npx github:TikaFlow/llm-fix -u https://your-api-endpoint.com -p 8080
 ```
 
 ## 使用
 
 ```bash
 # 指定目标 API 和端口
-fix-cc -u https://your-api-endpoint.com -p 8080
+llm-fix -u https://your-api-endpoint.com -p 8080
 
 # 使用长选项
-fix-cc --target-url https://your-api-endpoint.com --port 8080
+llm-fix --target-url https://your-api-endpoint.com --port 8080
 
 # 覆盖 body 中的字段（支持点号路径，可多次使用）
-fix-cc -u https://your-api-endpoint.com --body-rewrite thinking.type=enabled
+llm-fix -u https://your-api-endpoint.com --body-rewrite thinking.type=enabled
 
 # 使用 --thinking 语法糖（等价于 --body-rewrite thinking.type=<value>）
-fix-cc -u https://your-api-endpoint.com --thinking enabled
+llm-fix -u https://your-api-endpoint.com --thinking enabled
 
 # 覆盖转发请求的 HTTP 头字段
-fix-cc -u https://your-api-endpoint.com --header-rewrite anthropic-version=2023-06-01
+llm-fix -u https://your-api-endpoint.com --header-rewrite anthropic-version=2023-06-01
 ```
 
 然后配置 Claude Code 将 API 请求指向该代理。
